@@ -3,7 +3,7 @@
 // ==UserScript==
 // @name         搜题
 // @namespace    search-answer
-// @version      1.1
+// @version      1.2
 // @description  在线答题搜答案脚本
 // @author       HCLonely
 // @include      *
@@ -13,6 +13,7 @@
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
+// @homepage     https://github.com/HCLonely/search-answer
 // @require      https://cdn.jsdelivr.net/npm/sweetalert2@11
 // @require      https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.slim.min.js
 // @require      https://greasyfork.org/scripts/418102-tm-request/code/TM_request.js?version=902218
@@ -20,6 +21,10 @@
 // @require      https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
 // @require      https://cdn.jsdelivr.net/npm/tinykeys@1.4.0/dist/tinykeys.umd.min.js
 // @license      Apache-2.0
+// @connect      www.baidu.com
+// @connect      www.sogou.com
+// @connect      cn.bing.com
+// @connect      www.google.com
 // ==/UserScript==
 (() => {
     window.onblur = () => { };
