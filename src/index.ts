@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         搜题
 // @namespace    search-answer
-// @version      1.0
+// @version      1.1
 // @description  在线答题搜答案脚本
 // @author       HCLonely
 // @include      *
@@ -18,6 +18,7 @@
 // @require      https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js
 // @require      https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
 // @require      https://cdn.jsdelivr.net/npm/tinykeys@1.4.0/dist/tinykeys.umd.min.js
+// @license      Apache-2.0
 // ==/UserScript==
 
 (() => {
