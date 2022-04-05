@@ -16,7 +16,7 @@
 2. [安装此脚本](https://github.com/HCLonely/search-answer/raw/main/search-answer.user.js)
 3. 点击浏览器的`Tampermonkey`扩展图标，找到此脚本，点击启动
 4. 按要求选择模式
-5. 选择题目后会弹出`搜`按钮，点击此按钮即刻搜索
+5. 选择题目后会弹出`搜`按钮，点击此按钮即可搜索
 6. 不用的时候记得关闭此脚本，否则可能会造成访问其他网页出现BUG
 
 ## 搜题技巧
