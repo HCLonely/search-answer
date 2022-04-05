@@ -1,0 +1,23 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "outFile": "search-answer.user.js",
+    "sourceMap": false,
+    "strict": true,
+    "declaration": false,
+    "declarationMap": false,
+    "moduleResolution": "node",
+    "module": "amd",
+    "target": "es2021",
+    "baseUrl": "./",
+    "allowJs": true,
+    "downlevelIteration":true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "removeComments": false
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}
