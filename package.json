@@ -9,7 +9,7 @@
   },
   "keywords": [],
   "author": "HCLonely",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@babel/core": "^7.17.8",
     "@babel/preset-env": "^7.16.11",
