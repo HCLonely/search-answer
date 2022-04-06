@@ -1,7 +1,8 @@
 declare global {
   interface settings {
     highLightAbswer: boolean
-    shortcutKey: string
+    startShortcutKey: string
+    ocrShortcutKey: string
   }
   interface MonkeyXhrResponse {
     finalUrl: string
@@ -67,6 +68,7 @@ declare global {
   }
   const XLSX: any;
   const tinykeys: any;
+  const Tesseract: any;
   interface XLSXStrings {
     h: string
     r: string

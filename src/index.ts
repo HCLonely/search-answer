@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         搜题
 // @namespace    search-answer
-// @version      1.2
+// @version      1.3
 // @description  在线答题搜答案脚本
 // @author       HCLonely
 // @include      *
@@ -19,6 +19,7 @@
 // @require      https://cdn.jsdelivr.net/npm/mammoth@1.4.21/mammoth.browser.min.js
 // @require      https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
 // @require      https://cdn.jsdelivr.net/npm/tinykeys@1.4.0/dist/tinykeys.umd.min.js
+// @require      https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js
 // @license      Apache-2.0
 // @connect      www.baidu.com
 // @connect      www.sogou.com
@@ -52,7 +53,7 @@
     document.onfocusout = () => { };
   };
 
-  let { highLightAbswer, shortcutKey } = GM_getValue<settings>('settings') || {};
+  let { highLightAbswer, startShortcutKey, ocrShortcutKey } = GM_getValue<settings>('settings') || {};
   const start = async () => {
     let data: string | undefined | false;
     let engine = 'baidu';
@@ -165,6 +166,7 @@
         return data as string | false;
       } catch (error) {
         console.error(error);
+        Swal.fire('题库加载失败！', '详情请查看控制台', 'error');
         return false;
       }
     };
@@ -246,6 +248,8 @@
       if (text && icon.style.display === 'none') {
         icon.style.top = `${e.pageY + 12}px`;
         icon.style.left = `${e.pageX - 18}px`;
+        icon.innerHTML = '搜';
+        icon.setAttribute('title', '搜索');
         icon.style.display = 'block';
       } else if (!text) {
         icon.style.display = 'none';
@@ -270,19 +274,21 @@
     Swal.fire({
       title: '设置',
       // eslint-disable-next-line max-len
-      html: `<div class="setting"><input id="high-light-answer" type="checkbox"${highLightAbswer ? ' checked="checked"' : ''}/>高亮答案（仅支持题库模式且题目后面要紧跟"ABCD..."格式的答案）<br/>启动快捷键：<input id="shortcut-key" type="text" readonly="readonly" value="${shortcutKey || ''}"/></div>`,
+      html: `<div class="setting"><input id="high-light-answer" type="checkbox"${highLightAbswer ? ' checked="checked"' : ''}/>高亮答案（仅支持题库模式且题目后面要紧跟"ABCD..."格式的答案）<br/>启动快捷键：<input id="start-shortcut-key" type="text" readonly="readonly" value="${startShortcutKey || ''}"/><br/>启动快捷键：<input id="ocr-shortcut-key" type="text" readonly="readonly" value="${ocrShortcutKey || ''}"/></div>`,
       preConfirm: () => ({
         highLightAbswer: $('#high-light-answer').is(':checked'),
-        shortcutKey: $('#shortcut-key').val() as string
+        startShortcutKey: $('#start-shortcut-key').val() as string,
+        ocrShortcutKey: $('#ocr-shortcut-key').val() as string
       })
     }).then(({ value }) => {
       highLightAbswer = value?.highLightAbswer;
-      shortcutKey = value?.shortcutKey;
+      startShortcutKey = value?.startShortcutKey;
+      ocrShortcutKey = value?.ocrShortcutKey;
       GM_setValue('settings', {
-        highLightAbswer, shortcutKey
+        highLightAbswer, startShortcutKey, ocrShortcutKey
       });
     });
-    $('#shortcut-key').on('keydown', function (event) {
+    $('#start-shortcut-key,#ocr-shortcut-key').on('keydown', function (event) {
       let functionKey = '';
       if (event.metaKey) {
         functionKey += 'Meta+';
@@ -300,11 +306,51 @@
       $(this).val(functionKey + (['MEAT', 'ALT', 'CONTROL', 'SHIFT'].includes(keyValue) ? '' : keyValue));
     });
   };
-  if (shortcutKey) {
-    window.tinykeys.default(window, {
-      [shortcutKey]: start
+
+  const OCR = async () => {
+    const worker = Tesseract.createWorker({
+      logger: (message: any) => console.log(message)
     });
+    await worker.load();
+    await worker.loadLanguage('eng+chi_sim+chi_tra');
+    await worker.initialize('chi_sim');
+    Swal.fire('正在进行OCR识别，请耐心等待...');
+    Swal.showLoading();
+    for (const element of $.makeArray($('img[src]:not(".ocred")'))) {
+      try {
+        const { data: { text } } = await worker.recognize(element);
+        if (text) {
+          $(element).after(`<div>${text}</div>`);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+      $(element).addClass('ocred');
+    }
+    /*
+    for (const element of $.makeArray($('body *:not(".ocred")')).filter((e) => /^url\(.*?\)$/.test($(e).css('backgroundImage')))) {
+      const { data: { text } } = await worker.recognize($(element).css('backgroundImage')
+        .replace('url("', '')
+        .replace('")', ''));
+      if (text) {
+        $(element).after(`<div>${text}</div>`);
+      }
+      $(element).addClass('ocred');
+    }
+    */
+    await worker.terminate();
+    Swal.hideLoading();
+    Swal.fire('OCR识别完成！', '', 'success');
+  };
+
+  const tinykeysOptions: {[name: string]: any} = {};
+  if (startShortcutKey) {
+    tinykeysOptions[startShortcutKey] = start;
   }
+  if (ocrShortcutKey) {
+    tinykeysOptions[ocrShortcutKey] = OCR;
+  }
+  window.tinykeys.default(window, tinykeysOptions);
   GM_registerMenuCommand('启动', start);
   GM_registerMenuCommand('设置', settings);
   GM_addStyle(`
@@ -349,10 +395,10 @@
 .swal2-html-container .setting {
   text-align: left;
 }
-.swal2-html-container input#high-light-answer{
+.swal2-html-container input[type="checkbox"]{
   width: 15px;
 }
-.swal2-html-container input#shortcut-key{
+.swal2-html-container input[type="text"]{
   width: 200px;
   border: 2px solid #00a9fd;
   border-radius: 5px;
