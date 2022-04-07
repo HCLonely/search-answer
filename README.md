@@ -7,7 +7,7 @@
 - 不用时请关闭此脚本！
 - 启用此脚本后刷新网页才会生效！
 - 使用无题库模式时不要将弹出的窗口最大化
-- 支持txt, html, word, excel格式的题库，其他格式自行转换成支持的格式
+- 支持txt(建议), html, word(建议), excel格式的题库，其他格式自行转换成支持的格式
 - 选择受限时可配合[网页限制解除(改)](https://greasyfork.org/zh-CN/scripts/28497)脚本使用
 
 ## 使用说明
@@ -23,3 +23,12 @@
 
 - 选择题目时不要选择全部，选择部分文本即可
 - 选择题目时尽量不要选择标点符号
+
+## 鸣谢
+
+- [sweetalert2](https://github.com/sweetalert2/sweetalert2)
+- [jquery](https://github.com/jquery/jquery)
+- [mammoth.js](https://github.com/mwilliamson/mammoth.js)
+- [sheetjs](https://github.com/SheetJS/sheetjs)
+- [tinykeys](https://github.com/jamiebuilds/tinykeys)
+- [tesseract.js](https://github.com/naptha/tesseract.js)

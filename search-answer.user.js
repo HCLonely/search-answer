@@ -3,7 +3,7 @@
 // ==UserScript==
 // @name         搜题
 // @namespace    search-answer
-// @version      1.3
+// @version      1.4
 // @description  在线答题搜答案脚本
 // @author       HCLonely
 // @include      *
@@ -21,6 +21,7 @@
 // @require      https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
 // @require      https://cdn.jsdelivr.net/npm/tinykeys@1.4.0/dist/tinykeys.umd.min.js
 // @require      https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js
+// @require      https://cdn.jsdelivr.net/npm/js-md5@0.7.3/build/md5.min.js
 // @license      Apache-2.0
 // @connect      www.baidu.com
 // @connect      www.sogou.com
@@ -55,6 +56,7 @@
     let { highLightAbswer, startShortcutKey, ocrShortcutKey } = GM_getValue('settings') || {};
     const start = async () => {
         let data;
+        let imageData;
         let engine = 'baidu';
         const searchFromWebPage = (text, engine) => {
             switch (engine) {
@@ -94,16 +96,25 @@
                 const matchResult = data.slice(i - 100, i + 500).replace(regText, `<font style="color:red">${text}</font>`);
                 if (highLightAbswer) {
                     const arr = matchResult.split(text);
-                    arr[1] = arr[1].replace(/[A-D]+/, '<font style="color:red">$&</font>');
+                    arr[1] = arr[1].replace(/[\w]+/, '<font style="color:red">$&</font>');
                     result.push(arr.join(text));
                     continue;
                 }
                 result.push(matchResult);
             }
-            return result.filter((e) => e.trim()).join('<br><hr data-content="分隔线">');
+            return result.filter((e) => e.trim()).map((e) => {
+                if (!(e.includes('<img') && imageData && Object.keys(imageData).length > 0)) {
+                    return e;
+                }
+                // eslint-disable-next-line
+                Object.keys(imageData).map((imageMd5) => e.includes(`$${imageMd5}$`) && (e = e.replace(`$${imageMd5}$`, imageData[imageMd5])));
+                return e;
+            })
+                .join('<br><hr data-content="分隔线">');
         };
         const readData = async () => {
             try {
+                const imagesData = {};
                 const data = await new Promise((res) => {
                     // eslint-disable-next-line max-len
                     const input = $('<input type="file" id="search-answer-js" style="width:50%;height:50%;color:red;position:fixed;left:25%;top:25%;background-color:red;z-index:99999999" title="点此加载题库" multiple="multiple">');
@@ -120,12 +131,21 @@
                             const text = (await Promise.all([...(this.files || [])].map((file) => new Promise((resolve) => {
                                 const reader = new FileReader();
                                 const fileName = file.name;
-                                reader.onabort = () => resolve(false);
-                                reader.onerror = () => resolve(false);
+                                reader.onabort = () => resolve('');
+                                reader.onerror = () => resolve('');
                                 if (/.*?\.docx?$/.test(fileName)) {
                                     reader.onload = async () => {
                                         const arrayBuffer = reader.result;
-                                        const { value: fileData } = await mammoth.convertToHtml({ arrayBuffer });
+                                        const options = {
+                                            convertImage: mammoth.images.imgElement((image) => image.read('base64').then((imageBuffer) => {
+                                                const imageMd5 = md5(imageBuffer);
+                                                imagesData[imageMd5] = `data:${image.contentType};base64,${imageBuffer}`;
+                                                return {
+                                                    src: `$${imageMd5}$`
+                                                };
+                                            }))
+                                        };
+                                        const { value: fileData } = await mammoth.convertToHtml({ arrayBuffer }, options);
                                         resolve(fileData);
                                     };
                                     reader.readAsArrayBuffer(file);
@@ -147,7 +167,7 @@
                                     reader.onload = () => {
                                         const fileData = reader.result;
                                         if (!fileData) {
-                                            return resolve(false);
+                                            return resolve('');
                                         }
                                         resolve(fileData);
                                     };
@@ -155,6 +175,7 @@
                                 }
                             })))).join('<br/>');
                             GM_setValue('data0', text);
+                            GM_setValue('data1', imagesData);
                             input.remove();
                             Swal.fire('题库加载完毕！');
                             res(text);
@@ -162,12 +183,12 @@
                     });
                     document.querySelector('#search-answer-js').click();
                 });
-                return data;
+                return { text: data, image: imagesData };
             }
             catch (error) {
                 console.error(error);
                 Swal.fire('题库加载失败！', '详情请查看控制台', 'error');
-                return false;
+                return {};
             }
         };
         await Swal.fire({
@@ -180,7 +201,8 @@
             denyButtonText: '无题库模式'
         }).then(async ({ isConfirmed, isDenied }) => {
             if (isConfirmed) {
-                data = await readData();
+                data = (await readData()).text;
+                imageData = (await readData()).image;
             }
             else if (isDenied) {
                 data = 'none';
@@ -206,6 +228,7 @@
             }
             else {
                 data = GM_getValue('data0');
+                imageData = GM_getValue('data1');
             }
         });
         if (!data)

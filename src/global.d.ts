@@ -4,6 +4,9 @@ declare global {
     startShortcutKey: string
     ocrShortcutKey: string
   }
+  interface imageDataType {
+    [name: string]: string
+  }
   interface MonkeyXhrResponse {
     finalUrl: string
     readyState: number
@@ -69,6 +72,7 @@ declare global {
   const XLSX: any;
   const tinykeys: any;
   const Tesseract: any;
+  const md5: any;
   interface XLSXStrings {
     h: string
     r: string
